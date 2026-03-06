@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Carb0 — Your Recommendation</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #000; color: #fff; font-family: 'IBM Plex Mono', monospace; min-height: 100vh; padding: 24px; }
+  .container { max-width: 860px; margin: 0 auto; }
+  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .logo { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 3px; }
+  .logo span { opacity: 0.3; }
+  .athlete-name { font-size: 11px; color: #888; letter-spacing: 1px; }
+  .loading { text-align: center; padding: 80px 0; font-size: 12px; color: #444; letter-spacing: 2px; }
+  @keyframes pulse { 0%,100% { opacity: 0.3; } 50% { opacity: 1; } }
+  .loading-dot { animation: pulse 1.2s infinite; }
+  .section-label { font-size: 8px; letter-spacing: 4px; text-transform: uppercase; color: #444; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .section-label::before { content: ''; display: block; width: 14px; height: 1px; background: #444; }
+  .profile-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 32px; }
+  .stat-card { border: 1px solid rgba(255,255,255,0.08); padding: 16px; }
+  .stat-value { font-family: 'Bebas Neue', sans-serif; font-size: 36px; line-height: 1; }
+  .stat-unit { font-size: 9px; color: #888; letter-spacing: 2px; margin-top: 4px; }
+  .reco-box { border: 1.5px solid #fff; padding: 28px; margin-bottom: 32px; display: grid; grid-template-columns: auto 1fr auto; gap: 28px; align-items: center; }
+  .reco-sachet { width: 100px; height: 130px; border: 1.5px solid #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .reco-sachet-num { font-family: 'Bebas Neue', sans-serif; font-size: 48px; line-height: 1; }
+  .reco-sachet-g { font-size: 10px; letter-spacing: 2px; color: #888; }
+  .reco-count { font-family: 'Bebas Neue', sans-serif; font-size: 52px; line-height: 1; }
+  .reco-count-label { font-size: 11px; color: #888; letter-spacing: 1px; margin-top: 4px; }
+  .reco-math { font-size: 10px; color: #444; line-height: 1.8; margin-top: 12px; }
+  .reco-price { text-align: right; }
+  .reco-total { font-family: 'Bebas Neue', sans-serif; font-size: 40px; line-height: 1; }
+  .reco-total-label { font-size: 9px; color: #888; letter-spacing: 2px; margin-top: 4px; }
+  .size-toggle { display: flex; gap: 8px; margin-bottom: 24px; }
+  .size-btn { background: transparent; color: #444; border: 1px solid rgba(255,255,255,0.1); padding: 8px 20px; font-family: inherit; font-size: 11px; letter-spacing: 1px; cursor: pointer; transition: all 0.2s; }
+  .size-btn.active { background: #fff; color: #000; border-color: #fff; font-weight: 600; }
+  .size-btn:hover:not(.active) { border-color: #888; color: #888; }
+  .savings-box { border: 1px solid rgba(255,255,255,0.08); padding: 24px; margin-bottom: 32px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+  .savings-label { font-size: 9px; color: #444; letter-spacing: 2px; text-transform: uppercase; }
+  .savings-value { font-family: 'Bebas Neue', sans-serif; font-size: 28px; margin-top: 4px; }
+  .savings-value.strikethrough { color: #444; text-decoration: line-through; }
+  .savings-sub { font-size: 9px; color: #888; margin-top: 2px; }
+  .activity-list { margin-bottom: 32px; }
+  .activity-row { display: grid; grid-template-columns: 1fr 80px 80px 60px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 11px; color: #888; }
+  .activity-row.head { color: #444; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .activity-fuelable { color: #fff; }
+  .delivery-bar { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 32px; }
+  .delivery-info { font-size: 11px; color: #888; }
+  .delivery-info strong { color: #fff; font-weight: 600; }
+  .btn { font-family: inherit; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; padding: 10px 20px; cursor: pointer; transition: all 0.2s; }
+  .btn-primary { background: #fff; color: #000; border: 1.5px solid #fff; font-weight: 600; }
+  .btn-primary:hover { background: transparent; color: #fff; }
+  .btn-secondary { background: transparent; color: #888; border: 1px solid rgba(255,255,255,0.1); }
+  .disconnect { text-align: center; padding: 20px; }
+  .disconnect a { color: #444; font-size: 10px; letter-spacing: 2px; text-decoration: none; text-transform: uppercase; }
+  .disconnect a:hover { color: #888; }
+  .strava-attribution {
+    text-align: center; padding: 12px 0 20px;
+    font-size: 9px; letter-spacing: 2px; color: #444;
+  }
+  .strava-attribution svg { width: 14px; height: 14px; vertical-align: middle; margin-right: 4px; }
+  .view-on-strava {
+    color: #FC4C02; text-decoration: none; font-weight: 600;
+    font-size: 10px; letter-spacing: 1px;
+  }
+  .view-on-strava:hover { text-decoration: underline; }
+  @media (max-width: 700px) {
+    .profile-grid { grid-template-columns: repeat(2, 1fr); }
+    .reco-box { grid-template-columns: 1fr; text-align: center; }
+    .reco-sachet { margin: 0 auto; }
+    .reco-price { text-align: center; }
+    .savings-box { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="logo">CARB<span>0</span></div>
+    <div class="athlete-name" id="athlete-name"></div>
+  </div>
+  <div id="content">
+    <div class="loading"><span class="loading-dot">ANALYZING YOUR RIDES</span></div>
+  </div>
+</div>
+
+<script>
+const athleteId = "{{ athlete_id }}";
+let currentData = null;
+let currentSachetSize = null;
+
+async function fetchRecommendation(sachetSize) {
+  let url = `/api/recommendation?athlete=${athleteId}`;
+  if (sachetSize) url += `&sachet_size=${sachetSize}`;
+  const res = await fetch(url);
+  if (res.status === 401) { window.location.href = '/?error=session_expired'; return; }
+  return res.json();
+}
+
+function formatDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+}
+
+function render(data) {
+  currentData = data;
+  currentSachetSize = data.recommendation.sachet_size;
+  const p = data.profile;
+  const r = data.recommendation;
+  const s = data.savings;
+  const d = data.delivery;
+
+  document.getElementById('athlete-name').textContent =
+    data.athlete ? `${data.athlete.firstname} ${data.athlete.lastname}` : '';
+
+  const activitiesHtml = (data.activities || [])
+    .sort((a, b) => new Date(b.date) - new Date(a.date))
+    .slice(0, 15)
+    .map(a => {
+      const fuelable = a.hours >= 0.75;
+      return `<div class="activity-row">
+        <div class="${fuelable ? 'activity-fuelable' : ''}">${a.name}</div>
+        <div>${formatDate(a.date)}</div>
+        <div>${a.hours}h</div>
+        <div>${a.km}km</div>
+      </div>`;
+    }).join('');
+
+  document.getElementById('content').innerHTML = `
+    <div class="section-label">Sachet Size</div>
+    <div class="size-toggle">
+      <button class="size-btn ${r.sachet_size === 60 ? 'active' : ''}" onclick="switchSize(60)">60g — Standard</button>
+      <button class="size-btn ${r.sachet_size === 90 ? 'active' : ''}" onclick="switchSize(90)">90g — High Output</button>
+    </div>
+
+    <div class="section-label">Last ${p.window_days} Days</div>
+    <div class="profile-grid">
+      <div class="stat-card"><div class="stat-value">${p.weekly_hours}</div><div class="stat-unit">hours / week</div></div>
+      <div class="stat-card"><div class="stat-value">${p.weekly_rides}</div><div class="stat-unit">rides / week</div></div>
+      <div class="stat-card"><div class="stat-value">${p.fuelable_rides}</div><div class="stat-unit">rides 45min+</div></div>
+      <div class="stat-card"><div class="stat-value">${p.total_km}</div><div class="stat-unit">km total</div></div>
+    </div>
+
+    <div class="section-label">Your Monthly Box</div>
+    <div class="reco-box">
+      <div class="reco-sachet"><div class="reco-sachet-num">${r.sachet_size}</div><div class="reco-sachet-g">GRAMS</div></div>
+      <div>
+        <div class="reco-count">${r.recommended_sachets}</div>
+        <div class="reco-count-label">sachets per month</div>
+        <div class="reco-math">
+          ${r.adjusted_monthly_hours}h fuelable × ${r.carbs_per_hour}g/h = ${r.total_grams_needed}g ÷ ${r.sachet_size}g = ${r.raw_sachets} sachets
+          ${r.seasonal_factor !== 1 ? '<br>seasonal adj: ×' + r.seasonal_factor : ''}
+        </div>
+      </div>
+      <div class="reco-price">
+        <div class="reco-total">€${s.monthly_cost_carb0.toFixed(2)}</div>
+        <div class="reco-total-label">per month</div>
+      </div>
+    </div>
+
+    <div class="section-label">vs Premium Brands</div>
+    <div class="savings-box">
+      <div><div class="savings-label">Them</div><div class="savings-value strikethrough">€${s.competitor_price.toFixed(2)}</div><div class="savings-sub">per serving avg</div></div>
+      <div><div class="savings-label">Carb0</div><div class="savings-value">€${s.price_per_sachet.toFixed(2)}</div><div class="savings-sub">per sachet</div></div>
+      <div><div class="savings-label">You save</div><div class="savings-value">€${s.annual_savings}</div><div class="savings-sub">per year (−${s.savings_percent}%)</div></div>
+    </div>
+
+    <div class="section-label">Next Delivery</div>
+    <div class="delivery-bar">
+      <div class="delivery-info">Ships <strong>${d.next_ship_date}</strong> — modify until ${d.modify_until}</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-secondary" onclick="alert('Skip — coming soon')">Skip</button>
+        <button class="btn btn-primary" onclick="alert('Confirmed!')">Confirm</button>
+      </div>
+    </div>
+
+    <div class="section-label">Recent Rides</div>
+    <div class="activity-list">
+      <div class="activity-row head"><div>Ride</div><div>Date</div><div>Time</div><div>Dist</div></div>
+      ${activitiesHtml || '<div style="padding:16px 0;color:#444;font-size:11px">No cycling activities in the last 28 days</div>'}
+    </div>
+    <div style="text-align:right;margin-bottom:32px">
+      <a href="https://www.strava.com/athlete/training" target="_blank" rel="noopener" class="view-on-strava">View on Strava</a>
+    </div>
+
+    <div class="strava-attribution">
+      <svg viewBox="0 0 24 24" fill="#FC4C02"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169"/></svg>
+      Compatible with Strava
+    </div>
+
+    <div class="disconnect"><a href="/">← Disconnect</a></div>
+  `;
+}
+
+async function switchSize(size) {
+  if (size === currentSachetSize) return;
+  const data = await fetchRecommendation(size);
+  if (data) render(data);
+}
+
+(async () => {
+  try {
+    const data = await fetchRecommendation();
+    if (data && !data.error) render(data);
+    else window.location.href = '/?error=' + (data?.error || 'unknown');
+  } catch (err) {
+    document.getElementById('content').innerHTML =
+      '<div class="loading" style="color:#ff6b6b">Failed to load. <a href="/" style="color:#ff6b6b">Try again</a></div>';
+  }
+})();
+</script>
+</body>
+</html>
