@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Carb0 — Order Confirmed</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0a0a; color: #fff;
+    font-family: 'IBM Plex Mono', monospace;
+    min-height: 100vh; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; padding: 40px 24px;
+    text-align: center;
+  }
+  .logo { font-family: 'Bebas Neue', sans-serif; font-size: 32px; letter-spacing: 4px; margin-bottom: 40px; }
+  .logo span { opacity: 0.5; }
+  .check {
+    width: 64px; height: 64px; border: 2px solid #3b82f6; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; margin: 0 auto 24px;
+  }
+  .check svg { width: 32px; height: 32px; }
+  h1 { font-family: 'Bebas Neue', sans-serif; font-size: 42px; letter-spacing: 2px; margin-bottom: 12px; }
+  .subtitle { font-size: 13px; color: #aaa; line-height: 1.8; margin-bottom: 32px; max-width: 480px; }
+  .order-details {
+    border: 1px solid #2a2a2a; border-radius: 8px; padding: 24px; margin-bottom: 32px;
+    background: #1a1a1a; text-align: left; max-width: 400px; width: 100%;
+  }
+  .order-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 12px; color: #aaa; }
+  .order-row:not(:last-child) { border-bottom: 1px solid #2a2a2a; }
+  .order-row strong { color: #fff; }
+  .btn-home {
+    display: inline-block; padding: 14px 32px;
+    background: #3b82f6; color: #fff; border-radius: 6px;
+    font-family: inherit; font-size: 12px; font-weight: 600;
+    letter-spacing: 2px; text-transform: uppercase;
+    text-decoration: none; transition: background 0.2s;
+  }
+  .btn-home:hover { background: #2563eb; }
+  .note { font-size: 10px; color: #666; margin-top: 24px; line-height: 1.8; }
+</style>
+</head>
+<body>
+  <div class="logo">CARB<span>0</span></div>
+
+  <div class="check">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="20 6 9 17 4 12"></polyline>
+    </svg>
+  </div>
+
+  <h1>ORDER CONFIRMED</h1>
+  <div class="subtitle">
+    Your quarterly Carb0 box is on its way.<br>
+    We'll email you tracking details once it ships.
+  </div>
+
+  {% if order %}
+  <div class="order-details">
+    {% if order.quantity %}
+    <div class="order-row"><span>Box</span><strong>{{ order.quantity }} × {{ order.sachet_size }}g sachets</strong></div>
+    {% endif %}
+    {% if order.amount %}
+    <div class="order-row"><span>Total</span><strong>{{ order.amount }}</strong></div>
+    {% endif %}
+    {% if order.email %}
+    <div class="order-row"><span>Confirmation to</span><strong>{{ order.email }}</strong></div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <a href="/" class="btn-home">Back to Carb0</a>
+
+  <div class="note">
+    Questions? Email hello@getcarb0.com<br>
+    Your receipt has been sent via Stripe.
+  </div>
+</body>
+</html>

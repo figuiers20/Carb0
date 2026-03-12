@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Carb0 — Order Your Quarterly Box</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --black: #0a0a0a; --dark: #141414; --card: #1a1a1a; --border: #2a2a2a;
+    --white: #fff; --dim: #777; --grey: #aaa; --light: #ddd;
+    --orange: #FC4C02; --action: #3b82f6; --action-hover: #2563eb;
+  }
+  body { background: var(--black); color: var(--white); font-family: 'IBM Plex Mono', monospace; min-height: 100vh; padding: 24px; }
+  .container { max-width: 640px; margin: 0 auto; }
+
+  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 40px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+  .logo { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 3px; text-decoration: none; color: var(--white); }
+  .logo span { opacity: 0.5; }
+  .back-link { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--grey); text-decoration: none; }
+  .back-link:hover { color: var(--white); }
+
+  .page-title { font-family: 'Bebas Neue', sans-serif; font-size: 42px; letter-spacing: 2px; margin-bottom: 8px; }
+  .page-sub { font-size: 12px; color: var(--grey); margin-bottom: 32px; line-height: 1.7; }
+
+  .section-label { font-size: 10px; letter-spacing: 4px; text-transform: uppercase; color: var(--dim); margin-bottom: 14px; }
+
+  /* ── Size selection ── */
+  .size-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 32px; }
+  .size-card {
+    border: 2px solid var(--border); border-radius: 10px; padding: 24px;
+    background: var(--card); cursor: pointer; transition: all 0.2s; text-align: center;
+  }
+  .size-card:hover { border-color: var(--grey); }
+  .size-card.active { border-color: var(--action); background: linear-gradient(to bottom, rgba(59,130,246,0.06), transparent); }
+  .size-card-num { font-family: 'Bebas Neue', sans-serif; font-size: 56px; line-height: 1; }
+  .size-card-g { font-size: 12px; letter-spacing: 3px; color: var(--grey); }
+  .size-card-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--dim); margin-top: 8px; }
+  .size-card-price { font-size: 16px; font-weight: 700; color: var(--action); margin-top: 8px; }
+
+  /* ── Quantity ── */
+  .qty-section { margin-bottom: 32px; }
+  .qty-row { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+  .qty-controls { display: flex; align-items: center; }
+  .qty-btn {
+    width: 48px; height: 48px; background: var(--card); border: 1.5px solid var(--border);
+    color: var(--white); font-family: 'Bebas Neue', sans-serif; font-size: 24px;
+    cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center;
+  }
+  .qty-btn:first-child { border-radius: 8px 0 0 8px; }
+  .qty-btn:last-child { border-radius: 0 8px 8px 0; }
+  .qty-btn:hover { background: var(--border); }
+  .qty-btn:active { background: var(--action); }
+  .qty-display {
+    width: 72px; height: 48px; background: var(--dark); border-top: 1.5px solid var(--border); border-bottom: 1.5px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Bebas Neue', sans-serif; font-size: 28px;
+  }
+  .qty-info { font-size: 11px; color: var(--grey); line-height: 1.8; }
+  .qty-info strong { color: var(--white); }
+
+  /* ── Order summary ── */
+  .order-summary {
+    border: 2px solid var(--action); border-radius: 10px; padding: 28px; margin-bottom: 32px;
+    background: linear-gradient(to bottom, rgba(59,130,246,0.04), transparent);
+  }
+  .summary-row { display: flex; justify-content: space-between; padding: 10px 0; font-size: 12px; color: var(--grey); }
+  .summary-row:not(:last-child) { border-bottom: 1px solid var(--border); }
+  .summary-row strong { color: var(--white); }
+  .summary-total { display: flex; justify-content: space-between; padding: 16px 0 0; margin-top: 8px; border-top: 2px solid var(--border); }
+  .summary-total-label { font-size: 14px; font-weight: 600; }
+  .summary-total-price { font-family: 'Bebas Neue', sans-serif; font-size: 36px; color: var(--action); }
+
+  .checkout-btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%;
+    padding: 18px 32px; background: var(--action); color: var(--white); border: none; border-radius: 8px;
+    font-family: inherit; font-size: 15px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .checkout-btn:hover { background: var(--action-hover); transform: translateY(-1px); }
+  .checkout-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .checkout-note { font-size: 10px; color: var(--dim); text-align: center; margin-top: 12px; line-height: 1.8; }
+
+  .strava-nudge {
+    border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-top: 32px;
+    background: var(--card); text-align: center;
+  }
+  .strava-nudge p { font-size: 11px; color: var(--grey); margin-bottom: 12px; }
+  .strava-nudge a {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--orange); color: var(--white); padding: 10px 20px; border-radius: 6px;
+    font-family: inherit; font-size: 11px; font-weight: 600; letter-spacing: 2px;
+    text-transform: uppercase; text-decoration: none; transition: opacity 0.2s;
+  }
+  .strava-nudge a:hover { opacity: 0.9; }
+  .strava-nudge a svg { width: 16px; height: 16px; }
+
+  @media (max-width: 500px) {
+    .size-cards { grid-template-columns: 1fr; }
+    .qty-row { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <a href="/" class="logo">CARB<span>0</span></a>
+    <a href="/" class="back-link">← Back</a>
+  </div>
+
+  <div class="page-title">BUILD YOUR BOX</div>
+  <div class="page-sub">Pick your sachet size and quantity. We'll ship every quarter — adjust, pause, or cancel anytime.</div>
+
+  <!-- SIZE -->
+  <div class="section-label">1. Choose your sachet</div>
+  <div class="size-cards">
+    <div class="size-card active" id="size-60" onclick="selectSize(60)">
+      <div class="size-card-num">60</div>
+      <div class="size-card-g">GRAMS</div>
+      <div class="size-card-label">Standard</div>
+      <div class="size-card-price">€1.25 each</div>
+    </div>
+    <div class="size-card" id="size-90" onclick="selectSize(90)">
+      <div class="size-card-num">90</div>
+      <div class="size-card-g">GRAMS</div>
+      <div class="size-card-label">High Output</div>
+      <div class="size-card-price">€1.50 each</div>
+    </div>
+  </div>
+
+  <!-- QUANTITY -->
+  <div class="section-label">2. Set your quantity</div>
+  <div class="qty-section">
+    <div class="qty-row">
+      <div class="qty-controls">
+        <button class="qty-btn" onclick="adjustQty(-1)">−</button>
+        <div class="qty-display" id="qty-display">24</div>
+        <button class="qty-btn" onclick="adjustQty(1)">+</button>
+      </div>
+      <div class="qty-info">
+        <strong id="qty-monthly">8.0</strong> sachets / month<br>
+        Most riders doing 3–5h/week need 12–16 per month
+      </div>
+    </div>
+  </div>
+
+  <!-- SUMMARY -->
+  <div class="section-label">3. Your order</div>
+  <div class="order-summary">
+    <div class="summary-row"><span>Sachet</span><strong id="sum-sachet">60g Standard</strong></div>
+    <div class="summary-row"><span>Quantity</span><strong id="sum-qty">24 sachets</strong></div>
+    <div class="summary-row"><span>Price per sachet</span><strong id="sum-unit">€1.25</strong></div>
+    <div class="summary-row"><span>Delivery</span><strong>Quarterly · Letterbox · EU-wide</strong></div>
+    <div class="summary-total">
+      <div class="summary-total-label">Quarterly total</div>
+      <div class="summary-total-price" id="sum-total">€30.00</div>
+    </div>
+  </div>
+
+  <button class="checkout-btn" id="checkout-btn" onclick="startCheckout()">
+    Pre-Order — €<span id="checkout-price">30.00</span>
+  </button>
+  <div class="checkout-note">Secure payment via Stripe · Cancel anytime · Ships next quarter</div>
+
+  <div class="strava-nudge">
+    <p>Want a data-driven recommendation based on your actual rides?</p>
+    <a href="/auth/strava">
+      <svg viewBox="0 0 24 24" fill="#fff"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169"/></svg>
+      Connect with Strava
+    </a>
+  </div>
+</div>
+
+<script>
+let sachetSize = 60;
+let qty = 24;
+const PRICES = { 60: 1.25, 90: 1.50 };
+const LABELS = { 60: '60g Standard', 90: '90g High Output' };
+
+function updateDisplay() {
+  const price = PRICES[sachetSize];
+  const total = (qty * price).toFixed(2);
+  document.getElementById('qty-display').textContent = qty;
+  document.getElementById('qty-monthly').textContent = (qty / 3).toFixed(1);
+  document.getElementById('sum-sachet').textContent = LABELS[sachetSize];
+  document.getElementById('sum-qty').textContent = `${qty} sachets`;
+  document.getElementById('sum-unit').textContent = `€${price.toFixed(2)}`;
+  document.getElementById('sum-total').textContent = `€${total}`;
+  document.getElementById('checkout-price').textContent = total;
+}
+
+function selectSize(size) {
+  sachetSize = size;
+  document.getElementById('size-60').classList.toggle('active', size === 60);
+  document.getElementById('size-90').classList.toggle('active', size === 90);
+  updateDisplay();
+}
+
+function adjustQty(delta) {
+  qty = Math.max(12, Math.min(120, qty + delta));
+  updateDisplay();
+}
+
+async function startCheckout() {
+  const btn = document.getElementById('checkout-btn');
+  btn.disabled = true;
+  btn.textContent = 'Redirecting to checkout...';
+  try {
+    const res = await fetch('/api/checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sachet_size: sachetSize, quantity: qty }),
+    });
+    const data = await res.json();
+    if (data.checkout_url) {
+      window.location.href = data.checkout_url;
+    } else {
+      alert(data.error || 'Checkout failed. Try again.');
+      btn.disabled = false;
+      updateCheckoutBtn();
+    }
+  } catch (err) {
+    alert('Network error. Try again.');
+    btn.disabled = false;
+    updateCheckoutBtn();
+  }
+}
+
+function updateCheckoutBtn() {
+  const total = (qty * PRICES[sachetSize]).toFixed(2);
+  document.getElementById('checkout-btn').innerHTML = `Pre-Order — €<span id="checkout-price">${total}</span>`;
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Carb0 — Your Recommendation</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --black: #0a0a0a; --dark: #141414; --card: #1a1a1a; --border: #2a2a2a;
+    --white: #fff; --dim: #777; --grey: #aaa; --light: #ddd;
+    --orange: #FC4C02; --action: #3b82f6; --action-hover: #2563eb;
+  }
+
+  body { background: var(--black); color: var(--white); font-family: 'IBM Plex Mono', monospace; min-height: 100vh; padding: 24px; }
+  .container { max-width: 920px; margin: 0 auto; }
+
+  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+  .logo { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 3px; text-decoration: none; color: var(--white); }
+  .logo span { opacity: 0.5; }
+  .athlete-name { font-size: 11px; color: var(--grey); letter-spacing: 1px; }
+
+  .loading { text-align: center; padding: 80px 0; font-size: 12px; color: var(--grey); letter-spacing: 2px; }
+  @keyframes pulse { 0%,100% { opacity: 0.3; } 50% { opacity: 1; } }
+  .loading-dot { animation: pulse 1.2s infinite; }
+
+  .section-label { font-size: 10px; letter-spacing: 4px; text-transform: uppercase; color: var(--dim); margin-bottom: 14px; }
+
+  /* ── Stat cards ── */
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 32px; }
+  .stat-card { border: 1px solid var(--border); border-radius: 8px; padding: 18px; background: var(--card); }
+  .stat-value { font-family: 'Bebas Neue', sans-serif; font-size: 36px; line-height: 1; }
+  .stat-unit { font-size: 10px; color: var(--grey); letter-spacing: 2px; margin-top: 4px; }
+
+  /* ── Calorie cards ── */
+  .calorie-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 32px; }
+  .calorie-card { border: 1px solid var(--border); border-radius: 8px; padding: 18px; background: var(--card); }
+  .calorie-value { font-family: 'Bebas Neue', sans-serif; font-size: 34px; line-height: 1; color: var(--action); }
+  .calorie-unit { font-size: 10px; color: var(--grey); letter-spacing: 2px; margin-top: 4px; }
+  .calorie-note { font-size: 9px; color: var(--dim); margin-top: 6px; }
+
+  /* ── Combined order section ── */
+  .order-section {
+    border: 2px solid var(--action); border-radius: 12px; padding: 32px; margin-bottom: 32px;
+    background: linear-gradient(to bottom, rgba(59,130,246,0.04), transparent);
+  }
+  .order-title { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 2px; margin-bottom: 6px; }
+  .order-subtitle { font-size: 11px; color: var(--grey); margin-bottom: 24px; }
+
+  .size-toggle { display: flex; gap: 8px; margin-bottom: 20px; }
+  .size-btn {
+    background: var(--card); color: var(--grey); border: 1.5px solid var(--border); border-radius: 6px;
+    padding: 10px 22px; font-family: inherit; font-size: 11px; letter-spacing: 1px;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .size-btn.active { background: var(--action); color: var(--white); border-color: var(--action); font-weight: 600; }
+  .size-btn:hover:not(.active) { border-color: var(--grey); color: var(--white); }
+
+  .reco-row { display: flex; align-items: center; gap: 20px; margin-bottom: 20px; padding: 16px; background: rgba(255,255,255,0.03); border-radius: 8px; flex-wrap: wrap; }
+  .reco-label { font-size: 10px; color: var(--dim); letter-spacing: 2px; text-transform: uppercase; }
+  .reco-value { font-family: 'Bebas Neue', sans-serif; font-size: 28px; line-height: 1; }
+  .reco-note { font-size: 10px; color: var(--dim); }
+  .reco-math { font-size: 10px; color: var(--dim); line-height: 1.7; margin-left: auto; max-width: 340px; }
+
+  .divider-line { height: 1px; background: var(--border); margin: 20px 0; }
+
+  .qty-row { display: flex; align-items: center; gap: 20px; margin-bottom: 20px; flex-wrap: wrap; }
+  .qty-controls { display: flex; align-items: center; }
+  .qty-btn {
+    width: 44px; height: 44px; background: var(--card); border: 1.5px solid var(--border);
+    color: var(--white); font-family: 'Bebas Neue', sans-serif; font-size: 22px;
+    cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center;
+  }
+  .qty-btn:first-child { border-radius: 6px 0 0 6px; }
+  .qty-btn:last-child { border-radius: 0 6px 6px 0; }
+  .qty-btn:hover { background: var(--border); }
+  .qty-btn:active { background: var(--action); }
+  .qty-display {
+    width: 64px; height: 44px; background: var(--dark); border-top: 1.5px solid var(--border); border-bottom: 1.5px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Bebas Neue', sans-serif; font-size: 26px;
+  }
+  .qty-info { font-size: 11px; color: var(--grey); }
+  .qty-info strong { color: var(--white); }
+  .qty-total { margin-left: auto; text-align: right; }
+  .qty-total-amount { font-family: 'Bebas Neue', sans-serif; font-size: 36px; color: var(--action); }
+  .qty-total-label { font-size: 10px; color: var(--dim); }
+
+  .checkout-btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%;
+    padding: 16px 32px; background: var(--action); color: var(--white); border: none; border-radius: 8px;
+    font-family: inherit; font-size: 14px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .checkout-btn:hover { background: var(--action-hover); transform: translateY(-1px); }
+  .checkout-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .checkout-note { font-size: 10px; color: var(--dim); text-align: center; margin-top: 10px; }
+
+  /* ── Savings ── */
+  .savings-box {
+    border: 1px solid rgba(59,130,246,0.3); border-radius: 10px; padding: 24px; margin-bottom: 32px;
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;
+    background: linear-gradient(to right, rgba(59,130,246,0.04), transparent);
+  }
+  .savings-label { font-size: 10px; color: var(--dim); letter-spacing: 2px; text-transform: uppercase; }
+  .savings-value { font-family: 'Bebas Neue', sans-serif; font-size: 28px; margin-top: 4px; }
+  .savings-value.old { color: #555; text-decoration: line-through; }
+  .savings-value.save { color: var(--action); }
+  .savings-sub { font-size: 10px; color: var(--grey); margin-top: 2px; }
+
+  /* ── Chart ── */
+  .chart-container { margin-bottom: 32px; border: 1px solid var(--border); border-radius: 8px; padding: 20px; background: var(--card); }
+  .chart-row { display: flex; align-items: flex-end; gap: 4px; height: 140px; padding-bottom: 24px; }
+  .chart-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; }
+  .chart-bar { width: 100%; min-height: 2px; background: rgba(255,255,255,0.6); border-radius: 3px 3px 0 0; transition: all 0.3s; position: relative; cursor: pointer; }
+  .chart-bar:hover { background: var(--action); }
+  .chart-bar-tooltip { display: none; position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); background: var(--white); color: var(--black); font-size: 9px; padding: 5px 10px; white-space: nowrap; border-radius: 4px; font-weight: 600; z-index: 10; }
+  .chart-bar:hover .chart-bar-tooltip { display: block; }
+  .chart-label { font-size: 8px; color: var(--dim); margin-top: 6px; letter-spacing: 1px; }
+  .chart-legend { display: flex; gap: 16px; margin-top: 12px; font-size: 10px; color: var(--grey); }
+  .chart-legend-dot { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 4px; vertical-align: middle; }
+
+  /* ── Activity list ── */
+  .activity-list { margin-bottom: 16px; }
+  .activity-row { display: grid; grid-template-columns: 1fr 70px 70px 60px 70px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 11px; color: var(--grey); }
+  .activity-row.head { color: var(--dim); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+  .activity-fuelable { color: var(--white); }
+
+  .strava-attribution { text-align: center; padding: 12px 0 20px; font-size: 10px; letter-spacing: 2px; color: var(--dim); }
+  .strava-attribution svg { width: 14px; height: 14px; vertical-align: middle; margin-right: 4px; }
+  .view-on-strava { color: var(--orange); text-decoration: none; font-weight: 600; font-size: 10px; letter-spacing: 1px; }
+  .view-on-strava:hover { text-decoration: underline; }
+  .disconnect { text-align: center; padding: 20px; }
+  .disconnect a { color: var(--dim); font-size: 10px; letter-spacing: 2px; text-decoration: none; text-transform: uppercase; }
+  .disconnect a:hover { color: var(--grey); }
+
+  @media (max-width: 700px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .calorie-grid { grid-template-columns: 1fr; }
+    .savings-box { grid-template-columns: 1fr; }
+    .reco-row { flex-direction: column; align-items: flex-start; }
+    .reco-math { margin-left: 0; max-width: 100%; }
+    .qty-row { flex-direction: column; align-items: flex-start; }
+    .qty-total { margin-left: 0; text-align: left; }
+    .activity-row { grid-template-columns: 1fr 60px 60px; }
+    .activity-row > :nth-child(4), .activity-row > :nth-child(5) { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <a href="/" class="logo">CARB<span>0</span></a>
+    <div class="athlete-name" id="athlete-name"></div>
+  </div>
+  <div id="content">
+    <div class="loading"><span class="loading-dot">ANALYZING 90 DAYS OF RIDES</span></div>
+  </div>
+</div>
+
+<script>
+const athleteId = "{{ athlete_id }}";
+let currentData = null, currentSachetSize = null, currentQty = 24, currentPrice = 1.25;
+const PRICES = { 60: 1.25, 90: 1.50 };
+
+async function fetchRecommendation(sachetSize) {
+  let url = `/api/recommendation?athlete=${athleteId}`;
+  if (sachetSize) url += `&sachet_size=${sachetSize}`;
+  const res = await fetch(url);
+  if (res.status === 401) { window.location.href = '/?error=session_expired'; return; }
+  return res.json();
+}
+
+function formatDate(iso) { return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }); }
+function formatWeek(iso) { return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }); }
+function fmtNum(n) { return n ? n.toLocaleString() : '0'; }
+
+function buildChart(weeks) {
+  if (!weeks || !weeks.length) return '<div style="padding:20px;color:#777;font-size:11px;text-align:center">No weekly data</div>';
+  const max = Math.max(...weeks.map(w => w.hours), 1);
+  const bars = weeks.map(w => {
+    const pct = (w.hours / max) * 100;
+    const fuelPct = (w.fuelable_hours / max) * 100;
+    return `<div class="chart-bar-wrap">
+      <div class="chart-bar" style="height:${Math.max(pct,2)}%;">
+        <div class="chart-bar-tooltip">${w.hours}h · ${w.rides} rides · ${fmtNum(w.calories)} kcal</div>
+        <div style="position:absolute;bottom:0;left:0;right:0;height:${max>0?(fuelPct/pct*100):0}%;background:var(--action);border-radius:3px 3px 0 0;opacity:0.7;"></div>
+      </div>
+      <div class="chart-label">${formatWeek(w.week_start)}</div>
+    </div>`;
+  }).join('');
+  return `<div class="chart-row">${bars}</div>
+    <div class="chart-legend">
+      <span><span class="chart-legend-dot" style="background:rgba(255,255,255,0.6)"></span>Total hours</span>
+      <span><span class="chart-legend-dot" style="background:var(--action);opacity:0.7"></span>Fuelable hours</span>
+    </div>`;
+}
+
+function updateOrderUI() {
+  const total = (currentQty * currentPrice).toFixed(2);
+  document.getElementById('qty-display').textContent = currentQty;
+  document.getElementById('qty-monthly').textContent = (currentQty / 3).toFixed(1);
+  document.getElementById('qty-total-amount').textContent = `€${total}`;
+  document.getElementById('checkout-price').textContent = total;
+}
+
+function adjustQty(delta) {
+  currentQty = Math.max(12, Math.min(120, currentQty + delta));
+  updateOrderUI();
+}
+
+function resetQty() {
+  if (currentData) {
+    currentQty = currentData.recommendation.recommended_sachets;
+    updateOrderUI();
+  }
+}
+
+async function switchSize(size) {
+  if (size === currentSachetSize) return;
+  const data = await fetchRecommendation(size);
+  if (data) render(data);
+}
+
+async function startCheckout() {
+  const btn = document.getElementById('checkout-btn');
+  btn.disabled = true; btn.textContent = 'Redirecting to checkout...';
+  try {
+    const res = await fetch('/api/checkout', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sachet_size: currentSachetSize, quantity: currentQty, athlete_id: athleteId }),
+    });
+    const data = await res.json();
+    if (data.checkout_url) { window.location.href = data.checkout_url; }
+    else { alert(data.error || 'Checkout failed.'); btn.disabled = false; updateOrderUI(); restoreCheckoutBtn(); }
+  } catch (err) { alert('Network error.'); btn.disabled = false; restoreCheckoutBtn(); }
+}
+
+function restoreCheckoutBtn() {
+  const total = (currentQty * currentPrice).toFixed(2);
+  document.getElementById('checkout-btn').innerHTML = `Pre-Order — €<span id="checkout-price">${total}</span>`;
+}
+
+function render(data) {
+  currentData = data;
+  currentSachetSize = data.recommendation.sachet_size;
+  currentPrice = PRICES[currentSachetSize];
+  currentQty = data.recommendation.recommended_sachets;
+  const p = data.profile, r = data.recommendation, s = data.savings, d = data.delivery, cal = data.calories;
+  const total = (currentQty * currentPrice).toFixed(2);
+
+  document.getElementById('athlete-name').textContent =
+    data.athlete ? `${data.athlete.firstname} ${data.athlete.lastname}` : '';
+
+  const acts = (data.activities || []).sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0,20).map(a => {
+    const fuelable = a.hours >= 0.75;
+    const cals = a.watts ? Math.round(a.watts * a.hours * 3.6) : Math.round(a.hours * 500);
+    return `<div class="activity-row">
+      <div class="${fuelable ? 'activity-fuelable' : ''}">${a.name}</div>
+      <div>${formatDate(a.date)}</div><div>${a.hours}h</div><div>${a.km}km</div><div>${fmtNum(cals)} kcal</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('content').innerHTML = `
+    <!-- ═══ 1. WHAT YOU BURN ═══ -->
+    <div class="section-label">🔥 What you burn — last ${p.window_days} days</div>
+    <div class="calorie-grid">
+      <div class="calorie-card">
+        <div class="calorie-value">${fmtNum(cal.total_calories)}</div>
+        <div class="calorie-unit">total kcal burned</div>
+        <div class="calorie-note">${cal.rides_with_power_data} of ${cal.total_rides} rides with power meter</div>
+      </div>
+      <div class="calorie-card">
+        <div class="calorie-value">${fmtNum(cal.avg_calories_per_week)}</div>
+        <div class="calorie-unit">avg kcal / week</div>
+        ${p.avg_watts ? `<div class="calorie-note">Avg power: ${p.avg_watts}W</div>` : ''}
+      </div>
+      <div class="calorie-card">
+        <div class="calorie-value">${fmtNum(cal.avg_calories_per_ride)}</div>
+        <div class="calorie-unit">avg kcal / ride</div>
+        <div class="calorie-note">${p.fuelable_rides} rides needed fueling (≥45min)</div>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-value">${p.weekly_hours}</div><div class="stat-unit">hours / week</div></div>
+      <div class="stat-card"><div class="stat-value">${p.weekly_rides}</div><div class="stat-unit">rides / week</div></div>
+      <div class="stat-card"><div class="stat-value">${p.total_rides}</div><div class="stat-unit">total rides</div></div>
+      <div class="stat-card"><div class="stat-value">${fmtNum(p.total_km)}</div><div class="stat-unit">km ridden</div></div>
+    </div>
+
+    <!-- ═══ 2. YOUR ORDER (combined) ═══ -->
+    <div class="section-label">📦 Your quarterly box</div>
+    <div class="order-section">
+      <div class="order-title">STRAVA RECOMMENDATION</div>
+      <div class="order-subtitle">Based on ${p.fuelable_hours}h of fuelable riding over the last ${p.window_days} days</div>
+
+      <div class="size-toggle">
+        <button class="size-btn ${r.sachet_size === 60 ? 'active' : ''}" onclick="switchSize(60)">60g Standard — €1.25</button>
+        <button class="size-btn ${r.sachet_size === 90 ? 'active' : ''}" onclick="switchSize(90)">90g High Output — €1.50</button>
+      </div>
+
+      <div class="reco-row">
+        <div>
+          <div class="reco-label">Recommended</div>
+          <div class="reco-value">${r.recommended_sachets} × ${r.sachet_size}g sachets</div>
+          <div class="reco-note">≈ ${r.monthly_equivalent} per month</div>
+        </div>
+        <div class="reco-math">
+          ${r.adjusted_quarterly_hours}h fuelable × ${r.carbs_per_hour}g/h = ${fmtNum(r.total_grams_needed)}g ÷ ${r.sachet_size}g
+          ${r.seasonal_factor !== 1 ? ' · season ×' + r.seasonal_factor : ''}
+        </div>
+      </div>
+
+      <div class="divider-line"></div>
+
+      <div class="qty-row">
+        <div>
+          <div style="font-size:10px;color:var(--dim);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;">Adjust quantity</div>
+          <div class="qty-controls">
+            <button class="qty-btn" onclick="adjustQty(-1)">−</button>
+            <div class="qty-display" id="qty-display">${currentQty}</div>
+            <button class="qty-btn" onclick="adjustQty(1)">+</button>
+          </div>
+        </div>
+        <div class="qty-info">
+          <strong id="qty-monthly">${(currentQty / 3).toFixed(1)}</strong> sachets / month<br>
+          <span style="color:var(--dim);cursor:pointer;text-decoration:underline;" onclick="resetQty()">Reset to Strava recommendation</span>
+        </div>
+        <div class="qty-total">
+          <div class="qty-total-label">Quarterly total</div>
+          <div class="qty-total-amount" id="qty-total-amount">€${total}</div>
+        </div>
+      </div>
+
+      <button class="checkout-btn" id="checkout-btn" onclick="startCheckout()">
+        Pre-Order — €<span id="checkout-price">${total}</span>
+      </button>
+      <div class="checkout-note">Ships ${d.next_ship_date} · Secure payment via Stripe · Cancel anytime</div>
+    </div>
+
+    <!-- ═══ 3. SAVINGS ═══ -->
+    <div class="section-label">💰 Your savings</div>
+    <div class="savings-box">
+      <div><div class="savings-label">Premium brands</div><div class="savings-value old">€${s.competitor_price.toFixed(2)}</div><div class="savings-sub">per serving avg</div></div>
+      <div><div class="savings-label">Carb0</div><div class="savings-value">€${s.price_per_sachet.toFixed(2)}</div><div class="savings-sub">per sachet</div></div>
+      <div><div class="savings-label">You save</div><div class="savings-value save">€${fmtNum(s.annual_savings)} / year</div><div class="savings-sub">−${s.savings_percent}% vs premium</div></div>
+    </div>
+
+    <!-- ═══ 4. BREAKDOWN ═══ -->
+    <div class="section-label">Weekly volume — hover for details</div>
+    <div class="chart-container">${buildChart(data.weekly_breakdown)}</div>
+
+    <div class="section-label">Recent rides</div>
+    <div class="activity-list">
+      <div class="activity-row head"><div>Ride</div><div>Date</div><div>Time</div><div>Dist</div><div>Energy</div></div>
+      ${acts || '<div style="padding:16px 0;color:#777;font-size:11px">No rides in the last 90 days</div>'}
+    </div>
+    <div style="text-align:right;margin-bottom:32px">
+      <a href="https://www.strava.com/athlete/training" target="_blank" rel="noopener" class="view-on-strava">View on Strava</a>
+    </div>
+
+    <div class="strava-attribution">
+      <svg viewBox="0 0 24 24" fill="#FC4C02"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169"/></svg>
+      Compatible with Strava
+    </div>
+    <div class="disconnect"><a href="/">← Back to Carb0</a></div>
+  `;
+}
+
+(async () => {
+  try {
+    const data = await fetchRecommendation();
+    if (data && !data.error) render(data);
+    else window.location.href = '/?error=' + (data?.error || 'unknown');
+  } catch (err) {
+    document.getElementById('content').innerHTML =
+      '<div class="loading" style="color:#ff6b6b">Failed to load. <a href="/" style="color:#ff6b6b">Try again</a></div>';
+  }
+})();
+</script>
+</body>
+</html>
